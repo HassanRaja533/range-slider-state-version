@@ -2,7 +2,7 @@
   "name": "range-slider-state-version",
   "version": "1.0.0",
   "description": "",
-  "main": "bundle.js",
+  "main": "src/index.js",
   "scripts": {
     "start": "budo web/boot.js:bundle.js --dir ./ --live --open",
     "build": "browserify web/boot.js > bundle.js",
@@ -27,7 +27,9 @@
     "standardx": "^7.0.0"
   },
   "standardx": {
-    "ignore": ["bundle.js"],
+    "ignore": [
+      "bundle.js"
+    ],
     "rules": {
       "camelcase": 0
     }
