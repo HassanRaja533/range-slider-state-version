@@ -4,16 +4,24 @@ const { sdb, get } = statedb(fallback_module) // Initialize state DB with fallba
 
 
 module.exports = range_slider
-let input_id = 0
+
+  const style = document.createElement('style')
+  let input_id = 0
 
 async function  range_slider (opts, protocol) {
 
   console.log (opts.sid) 
   const { id, sdb } = await get(opts.sid)
     
-  const on = {
-    style: inject
-  }
+ const on = {
+  value: handleValue,
+  style: inject
+ }
+
+  // Handle value updates
+ function handleValue(data) {
+  console.log(`✅ SID "${data.id}" value is now:`, data.value)
+ }
 
   // Load config from drive/data/opts.json (fallback will provide defaults)
   const config = await sdb.drive.get('data/opts.json')
@@ -22,11 +30,11 @@ async function  range_slider (opts, protocol) {
   const name = `range-slider-${input_id++}`
   const state = {}
 
-  function protocol (message, notify) {
+ function protocol (message, notify) {
     const { from } = message
     state[from] = { value: 0, notify }
     return listen
-  }
+ }
 
   const notify = protocol({ from: name }, listen)
 

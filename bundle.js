@@ -6,16 +6,24 @@ const { sdb, get } = statedb(fallback_module) // Initialize state DB with fallba
 
 
 module.exports = range_slider
-let input_id = 0
+
+  const style = document.createElement('style')
+  let input_id = 0
 
 async function  range_slider (opts, protocol) {
 
   console.log (opts.sid) 
   const { id, sdb } = await get(opts.sid)
     
-  const on = {
-    style: inject
-  }
+ const on = {
+  value: handleValue,
+  style: inject
+ }
+
+  // Handle value updates
+ function handleValue(data) {
+  console.log(`✅ SID "${data.id}" value is now:`, data.value)
+ }
 
   // Load config from drive/data/opts.json (fallback will provide defaults)
   const config = await sdb.drive.get('data/opts.json')
@@ -24,11 +32,11 @@ async function  range_slider (opts, protocol) {
   const name = `range-slider-${input_id++}`
   const state = {}
 
-  function protocol (message, notify) {
+ function protocol (message, notify) {
     const { from } = message
     state[from] = { value: 0, notify }
     return listen
-  }
+ }
 
   const notify = protocol({ from: name }, listen)
 
@@ -245,14 +253,16 @@ const statedb = STATE(__filename)
 const { sdb, get } = statedb(fallback_module)
 
 const range_slider = require('..')
+const style = document.createElement('style')
+document.body.append(style)
 
-
+// Watch handlers
 const on = {
-  // This will handle all incoming value updates
-  value: handleValue
+  value: handleValue,
+  style: inject
 }
 
-// This is the core watch handler
+// Batch event dispatcher
 function onbatch(batch) {
   console.log('📦 Watch triggered with batch:', batch)
   for (const { type, data } of batch) {
@@ -262,33 +272,40 @@ function onbatch(batch) {
   }
 }
 
-// Called when any input module sends a value update
+// Handle value updates
 function handleValue(data) {
   console.log(`✅ SID "${data.id}" value is now:`, data.value)
+}
+
+// Inject CSS into <style> tag
+function inject(data) {
+  console.log('Injecting CSS:', data)
+  if (data?.raw) {
+    style.textContent = data.raw
+  }
 }
 
 async function main () {
   const subs = await sdb.watch(onbatch)
   const range = await range_slider(subs[0])
 
-  document.body.innerHTML = '<h1> range slider </h1>'
+  // Create DOM elements
+  const header = document.createElement('h1')
+  header.textContent = 'range slider'
 
   const main = document.createElement('div')
   main.classList.add('demo')
-
-  const style = document.createElement('style')
-  style.textContent = 
-    `
-    .demo {
-      padding: 50px;
-    }
-    `
-
   main.append(range)
-  document.body.append(main, style)
+
+  // Append elements to the body
+  document.body.append(header, main)
+
+  // Get and inject the CSS
+  const css = await sdb.drive.get('style/theme.css')
+  inject(css)
+
 }
 main()
-
 
 function fallback_module() {
   return {
@@ -297,7 +314,7 @@ function fallback_module() {
            'theme.css': {
               raw: `
                .demo {
-                 padding: 50px;
+                 padding: 50px
                 }`
             }
        }
