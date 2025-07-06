@@ -5,6 +5,8 @@ const { sdb, get } = statedb(fallback_module)
 
 const range_slider = require('..')
 const style = document.createElement('style')
+const state = {}
+
 document.body.append(style)
 
 // Watch handlers
@@ -35,10 +37,22 @@ function inject(data) {
     style.textContent = data.raw
   }
 }
+function protocol (message, notify) {
+    const { from } = message
+    state[from] = { value: 0, notify }
+    return listen
+ }
+
+ function listen (message) {
+  console.log(message) 
+}
+  
 
 async function main () {
   const subs = await sdb.watch(onbatch)
-  const range = await range_slider(subs[0])
+
+
+  const range = await range_slider(subs[0], protocol)
 
   // Create DOM elements
   const header = document.createElement('h1')
@@ -61,13 +75,13 @@ main()
 function fallback_module() {
   return {
     drive: {
-        'style/': {
-           'theme.css': {
-              raw: `
-               .demo {
-                 padding: 50px
-                }`
-            }
+      'style/': {
+        'theme.css': {
+            raw: `
+             .demo {
+               padding: 50px
+             }`
+          }
        }
     },
     _: {
